@@ -98,7 +98,7 @@ def prepare_params(kwargs, pass_env = None):
 
     kwargs['make_env'] = make_env
     tmp_env = cached_make_env(kwargs['make_env'], pass_env)
-    tmp_env._max_episode_steps = 100
+    tmp_env._max_episode_steps = 50
     assert hasattr(tmp_env, '_max_episode_steps')
     kwargs['T'] = tmp_env._max_episode_steps
 
