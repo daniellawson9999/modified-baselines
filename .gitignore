@@ -37,3 +37,6 @@ MUJOCO_LOG.TXT
 
 # trained models
 /models
+
+# yumi
+/gym_yumi
