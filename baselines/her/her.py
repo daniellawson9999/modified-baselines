@@ -116,7 +116,7 @@ def learn(*, network, env, total_timesteps,
     params.update(**override_params)  # makes it possible to override any parameter
     with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
          json.dump(params, f)
-    params = config.prepare_params(params)
+    params = config.prepare_params(params, env)
     params['rollout_batch_size'] = env.num_envs
 
     if demo_file is not None:
@@ -136,7 +136,6 @@ def learn(*, network, env, total_timesteps,
             'https://github.com/openai/baselines/issues/314 for further details.')
         logger.warn('****************')
         logger.warn()
-
     dims = config.configure_dims(params)
     policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
     if load_path is not None:

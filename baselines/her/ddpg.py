@@ -80,7 +80,7 @@ class DDPG(object):
             stage_shapes[key] = (None, *input_shapes[key])
         for key in ['o', 'g']:
             stage_shapes[key + '_2'] = stage_shapes[key]
-        stage_shapes['r'] = (None,)
+        stage_shapes['r'] = (None, ) # error?
         self.stage_shapes = stage_shapes
 
         # Create network.
@@ -139,7 +139,7 @@ class DDPG(object):
             policy.g_tf: g.reshape(-1, self.dimg),
             policy.u_tf: np.zeros((o.size // self.dimo, self.dimu), dtype=np.float32)
         }
-
+        
         ret = self.sess.run(vals, feed_dict=feed)
         # action postprocessing
         u = ret[0]
@@ -285,6 +285,7 @@ class DDPG(object):
         if batch is None:
             batch = self.sample_batch()
         assert len(self.buffer_ph_tf) == len(batch)
+        #import pdb; pdb.set_trace()
         self.sess.run(self.stage_op, feed_dict=dict(zip(self.buffer_ph_tf, batch)))
 
     def train(self, stage=True):

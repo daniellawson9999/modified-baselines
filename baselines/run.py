@@ -3,6 +3,7 @@ import re
 import multiprocessing
 import os.path as osp
 import gym
+import gym_yumi
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
@@ -13,6 +14,7 @@ from baselines.common.cmd_util import common_arg_parser, parse_unknown_args, mak
 from baselines.common.tf_util import get_session
 from baselines import logger
 from importlib import import_module
+from gym.envs.registration import register
 
 try:
     from mpi4py import MPI
@@ -30,10 +32,13 @@ except ImportError:
     roboschool = None
 
 _game_envs = defaultdict(set)
+#
 for env in gym.envs.registry.all():
     # TODO: solve this with regexes
     env_type = env.entry_point.split(':')[0].split('.')[-1]
     _game_envs[env_type].add(env.id)
+
+
 
 # reading benchmark names directly from retro requires
 # importing retro here, and for some reason that crashes tensorflow
@@ -48,6 +53,7 @@ _game_envs['retro'] = {
     'FinalFight-Snes',
     'SpaceInvaders-Snes',
 }
+#_game_envs['gym_yumi'].add({'goal-yumi-pegtransfer-v0'})
 
 
 def train(args, extra_args):
@@ -73,6 +79,7 @@ def train(args, extra_args):
 
     print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
 
+    #import pdb; pdb.set_trace();
     model = learn(
         env=env,
         seed=seed,

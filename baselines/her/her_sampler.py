@@ -51,11 +51,16 @@ def make_sample_her_transitions(replay_strategy, replay_k, reward_fun):
         # Re-compute reward since we may have substituted the goal.
         reward_params = {k: transitions[k] for k in ['ag_2', 'g']}
         reward_params['info'] = info
-        transitions['r'] = reward_fun(**reward_params)
 
+        length = reward_params['g'].shape[0]
+        transitions['r'] = np.empty((length,),dtype=np.float32)
+        for i in range(length):
+            transitions['r'][i] = reward_fun(reward_params['ag_2'][i], reward_params['g'][i], info)
+        #transitions['r'] = reward_fun(**reward_params)
+        #import pdb; pdb.set_trace()
         transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:])
                        for k in transitions.keys()}
-
+        #import pdb; pdb.set_trace()
         assert(transitions['u'].shape[0] == batch_size_in_transitions)
 
         return transitions
