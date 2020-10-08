@@ -59,17 +59,18 @@ def train(*, policy, rollout_worker, evaluator,
         for key, val in policy.logs():
             logger.record_tabular(key, mpi_average(val))
 
-        if rank == 0:
+        # TEST MODIFCATION, BREAKS SINGLE WORKER TRAINING
+        if rank == 1:
             logger.dump_tabular()
 
         # save the policy if it's better than the previous ones
         success_rate = mpi_average(evaluator.current_success_rate())
-        if rank == 0 and success_rate >= best_success_rate and save_path:
+        if rank == 1 and success_rate >= best_success_rate and save_path:
             best_success_rate = success_rate
             logger.info('New best success rate: {}. Saving policy to {} ...'.format(best_success_rate, best_policy_path))
             evaluator.save_policy(best_policy_path)
             evaluator.save_policy(latest_policy_path)
-        if rank == 0 and policy_save_interval > 0 and epoch % policy_save_interval == 0 and save_path:
+        if rank == 1 and policy_save_interval > 0 and epoch % policy_save_interval == 0 and save_path:
             policy_path = periodic_policy_path.format(epoch)
             logger.info('Saving periodic policy to {} ...'.format(policy_path))
             evaluator.save_policy(policy_path)
@@ -78,7 +79,7 @@ def train(*, policy, rollout_worker, evaluator,
         local_uniform = np.random.uniform(size=(1,))
         root_uniform = local_uniform.copy()
         MPI.COMM_WORLD.Bcast(root_uniform, root=0)
-        if rank != 0:
+        if rank != 1:
             assert local_uniform[0] != root_uniform[0]
 
     return policy
@@ -137,7 +138,9 @@ def learn(*, network, env, total_timesteps,
         logger.warn('****************')
         logger.warn()
     dims = config.configure_dims(params)
+    print(dims)
     policy = config.configure_ddpg(dims=dims, params=params, clip_return=clip_return)
+    #import pdb; pdb.set_trace();
     if load_path is not None:
         tf_util.load_variables(load_path)
 
