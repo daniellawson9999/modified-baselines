@@ -78,7 +78,7 @@ def train(*, policy, rollout_worker, evaluator,
         # make sure that different threads have different seeds
         local_uniform = np.random.uniform(size=(1,))
         root_uniform = local_uniform.copy()
-        MPI.COMM_WORLD.Bcast(root_uniform, root=0)
+        MPI.COMM_WORLD.Bcast(root_uniform, root=1)
         if rank != 1:
             assert local_uniform[0] != root_uniform[0]
 
