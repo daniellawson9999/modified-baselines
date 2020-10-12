@@ -8,7 +8,7 @@ from baselines.her.util import reshape_for_broadcasting
 
 
 class Normalizer:
-    def __init__(self, size, eps=1e-2, default_clip_range=np.inf, sess=None):
+    def __init__(self, size, eps=1e-2, default_clip_range=np.inf, sess=None, reuse = False):
         """A normalizer that ensures that observations are approximately distributed according to
         a standard Normal distribution (i.e. have mean zero and variance one).
 

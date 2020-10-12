@@ -366,11 +366,11 @@ def load_variables(load_path, variables=None, sess=None):
         for d, v in zip(loaded_params, variables):
             restores.append(v.assign(d))
     else:
-        for key in loaded_params.keys():
-            restores.append(tf.convert_to_tensor(loaded_params[key]))
-        #for v in variables:
-            #restores.append(v.assign(loaded_params[v.name]))
-
+        #for key in loaded_params.keys():
+            #restores.append(tf.convert_to_tensor(loaded_params[key]))
+        for v in variables:
+            restores.append(v.assign(loaded_params[v.name]))
+    # reuse=True or reuse=tf.AUTO_REUSE in VarScope? 
     sess.run(restores)
 
 # ================================================================

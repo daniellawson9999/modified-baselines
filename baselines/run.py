@@ -76,14 +76,17 @@ def train(args, extra_args):
     else:
         if alg_kwargs.get('network') is None:
             alg_kwargs['network'] = get_default_network(env_type)
-
+    
+    reuse = False
+    if args.play:
+        reuse = True
     print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
-
-    #import pdb; pdb.set_trace();
     model = learn(
         env=env,
         seed=seed,
         total_timesteps=total_timesteps,
+        save_path = args.save_path,
+        reuse = reuse, 
         **alg_kwargs
     )
 
@@ -227,7 +230,7 @@ def main(args):
 
     model, env = train(args, extra_args)
 
-    if args.save_path is not None and rank == 0:
+    if args.save_path is not None and rank == 1:
         save_path = osp.expanduser(args.save_path)
         model.save(save_path)
 

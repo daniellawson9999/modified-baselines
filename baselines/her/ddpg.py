@@ -321,11 +321,12 @@ class DDPG(object):
         with tf.variable_scope('o_stats') as vs:
             if reuse:
                 vs.reuse_variables()
-            self.o_stats = Normalizer(self.dimo, self.norm_eps, self.norm_clip, sess=self.sess)
+            #import pdb; pdb.set_trace()
+            self.o_stats = Normalizer(self.dimo, self.norm_eps, self.norm_clip, sess=self.sess, reuse=reuse)
         with tf.variable_scope('g_stats') as vs:
             if reuse:
                 vs.reuse_variables()
-            self.g_stats = Normalizer(self.dimg, self.norm_eps, self.norm_clip, sess=self.sess)
+            self.g_stats = Normalizer(self.dimg, self.norm_eps, self.norm_clip, sess=self.sess, reuse=reuse)
 
         # mini-batch sampling.
         batch = self.staging_tf.get()
