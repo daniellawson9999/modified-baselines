@@ -227,10 +227,10 @@ def main(args):
     else:
         rank = MPI.COMM_WORLD.Get_rank()
         configure_logger(args.log_path, format_strs=[])
-
+    print(extra_args)
     model, env = train(args, extra_args)
 
-    if args.save_path is not None and rank == 1:
+    if args.save_path is not None and rank == 0:
         save_path = osp.expanduser(args.save_path)
         model.save(save_path)
 
