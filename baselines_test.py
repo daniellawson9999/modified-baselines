@@ -2,30 +2,101 @@ import numpy as np
 import gym
 import gym_yumi
 import pickle
+import argparse
+import json
 
-env_kwargs = {'headless':False, 'maxval': 1, 'random_peg':False, 'normal_offset':False}
-env = gym.make('goal-yumi-pegtransfer-v0', **env_kwargs)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--approach', default=False, type=bool, help='whether to evaluate on approach')
+    parser.add_argument('--grasp', default=False, type=bool, help='whether to evaluate on grasp')
+    parser.add_argument('--approach-policy-path', default=None, type=str, help='path to location of approach policy')
+    parser.add_argument('--grasp-policy-path', default=None, type=str, help='path to location of approach policy')
+    parser.add_argument('--grasp-location-path', default=None, type=str, help='path to location of approach policy')
+    parser.add_argument('--episodes', default=5, type=int, help='number of episodes to test with')
+    args = parser.parse_args()
 
-load_path = './models/her7/policy_best.pkl'
-model = pickle.load(open(load_path, 'rb'))
+    # check for valid arg combinations
+    assert (args.grasp or args.approach), "Must specifiy a task"
+    if args.approach:
+        assert (args.approach_policy_path != None), "must specify approach policy"
+    if args.grasp:
+        assert (args.grasp_policy_path != None), "must specify grasp policy"
+        assert (args.grasp_location_path != None), "must specify grasp locations"
 
-env.reset()
-obs = env.reset()
 
-dones = np.zeros((1,))
+    if args.approach:
+        goal = "approach"
+    else:
+        goal = "grasp"
 
-episode_rew = np.zeros(1)
-while True:
+    env_kwargs = {'headless':False, 'maxval': 1, 'random_peg':True, 
+                  'normal_offset':False, 'goals': [goal]} 
 
-    actions, _, _, _ = model.step(obs)
-    obs, rew, done, info = env.step(actions)
-    episode_rew += rew
-    env.render()
-    done_any = done.any() if isinstance(done, np.ndarray) else done
-    if done_any:
-        obs = env.reset()
-        for i in np.nonzero(done)[0]:
-            print('episode_rew={}'.format(episode_rew[i]))
-            episode_rew[i] = 0
 
-env.close()
+    approach_model = None
+    grasp_model = None
+    if args.approach:
+        approach_model = pickle.load(open(args.approach_policy_path), 'rb')
+    if args.grasp:
+        grasp_model = pickle.load(open(args.grasp_policy_path), 'rb')
+
+    # single approach test
+    if (args.approach and not args.grasp):
+        env = gym.make('goal-yumi-pegtransfer-v0', **env_kwargs)
+        save_path = args.grasp_location_path
+        # if saving for grasp locations enabled, build dictionary
+        config_dictionary = {}
+        if save_path:
+            for peg in env.pegs:
+                config_dictionary[peg] = []
+        for i in range(args.episodes):
+            obs = env.reset()
+            for j in range(50):
+                actions, _, _, _ = approach_model.step(obs)
+                obs, rew, done, info = env.step(actions)
+                env.render()
+                if rew == 0:
+                    if save_path:
+                        joint_values = []
+                        for k in range(len(env.limb.joints)):
+                            joint_values.append(env.limb.joints[k].get_joint_position)
+                        config_dictionary[env.peg_name].append(joint_values)
+                    break
+        if save_path:
+            with open(save_path, "w") as save_file:
+                save_file.write(json.dumps(config_dictionary))
+        env.close()
+    # single grasp test
+    elif (not args.approach and args.grasp):
+        env = gym.make('goal-yumi-pegtransfer-v0', **env_kwargs)
+        for i in range(args.episodes):
+                obs = env.reset()
+                for j in range(50):
+                    actions, _, _, _ = approach_model.step(obs)
+                    obs, rew, done, info = env.step(actions)
+                    env.render()
+                    if rew == 0:
+                        break
+        env.close() 
+    # both
+    else:
+        env_kwargs['arm_configs'] = args.grasp_location_path
+        env = gym.make('goal-yumi-pegtransfer-v0', **env_kwargs)
+        for i in range(args.episodes):
+            obs = env.reset()
+            for j in range(50):
+                actions, _, _, _ = approach_model.step(obs)
+                obs, rew, done, info = env.step(actions)
+                env.render()
+                if rew == 0:
+                    break
+            for j in range(50):
+                actions, _, _, _ = grasp_model.step(obs)
+                obs, rew, done, info = env.step(actions)
+                env.render()
+                if rew == 0:
+                    break
+        env.close()
+
+        
+
