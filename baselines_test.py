@@ -11,9 +11,11 @@ if __name__ == "__main__":
     parser.add_argument('--grasp', default=False, type=bool, help='whether to evaluate on grasp')
     parser.add_argument('--approach-policy-path', default=None, type=str, help='path to location of approach policy')
     parser.add_argument('--grasp-policy-path', default=None, type=str, help='path to location of approach policy')
-    parser.add_argument('--grasp-location-path', default=None, type=str, help='path to location of approach policy')
+    parser.add_argument('--grasp-location-path', default=None, type=str, help='path to save grasp locations')
     parser.add_argument('--episodes', default=5, type=int, help='number of episodes to test with')
     args = parser.parse_args()
+    
+    # ex usage: python baselines_test.py --approach=True --approach-policy-path=./models/her9/policy_best.pkl --episodes=5
 
     # check for valid arg combinations
     assert (args.grasp or args.approach), "Must specifiy a task"
@@ -32,17 +34,18 @@ if __name__ == "__main__":
     env_kwargs = {'headless':False, 'maxval': 1, 'random_peg':True, 
                   'normal_offset':False, 'goals': [goal]} 
 
-
     approach_model = None
     grasp_model = None
     if args.approach:
-        approach_model = pickle.load(open(args.approach_policy_path), 'rb')
+        approach_model = pickle.load(open(args.approach_policy_path, 'rb'))
     if args.grasp:
-        grasp_model = pickle.load(open(args.grasp_policy_path), 'rb')
+        grasp_model = pickle.load(open(args.grasp_policy_path, 'rb'))
+
 
     # single approach test
     if (args.approach and not args.grasp):
         env = gym.make('goal-yumi-pegtransfer-v0', **env_kwargs)
+        #import pdb; pdb.set_trace()
         save_path = args.grasp_location_path
         # if saving for grasp locations enabled, build dictionary
         config_dictionary = {}
@@ -59,7 +62,7 @@ if __name__ == "__main__":
                     if save_path:
                         joint_values = []
                         for k in range(len(env.limb.joints)):
-                            joint_values.append(env.limb.joints[k].get_joint_position)
+                            joint_values.append(env.limb.joints[k].get_joint_position())
                         config_dictionary[env.peg_name].append(joint_values)
                     break
         if save_path:
@@ -90,6 +93,7 @@ if __name__ == "__main__":
                 env.render()
                 if rew == 0:
                     break
+            env.env.goals = ['grasp']
             for j in range(50):
                 actions, _, _, _ = grasp_model.step(obs)
                 obs, rew, done, info = env.step(actions)
