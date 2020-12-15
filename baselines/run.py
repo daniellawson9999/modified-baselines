@@ -216,7 +216,6 @@ def configure_logger(log_path, **kwargs):
 
 def main(args):
     # configure logger, disable logging in child MPI processes (with rank > 0)
-
     arg_parser = common_arg_parser()
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
